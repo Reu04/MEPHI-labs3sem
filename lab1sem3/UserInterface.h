@@ -14,7 +14,7 @@ void UIAddPtr(std::vector<SharedPtr<T>>& vec, T* object) {
 
 template<typename T>
 void UIFunctions(SharedPtr<T>& ptr) {
-    std::cout << "Which function do you want to use?\n1. *\n2. Get\n3. Use_count\n4. Unique\n5. Reset\n6. Swap\n7. Exit\n";
+    std::cout << "Which function do you want to use?\n1. *\n2. Get\n3. UseCount\n4. Unique\n5. Reset\n6. Swap\n7. Exit\n";
     int func;
     std::cin >> func;
     switch (func) {
@@ -25,7 +25,7 @@ void UIFunctions(SharedPtr<T>& ptr) {
             std::cout << "\nThe address of the object is: " << ptr.Get() << std::endl;
             break;
         case 3:
-            std::cout << "\nThe number of pointers to the object is: " << ptr.Use_count() << std::endl;
+            std::cout << "\nThe number of pointers to the object is: " << ptr.UseCount() << std::endl;
             break;
         case 4:
             std::cout << "\nIs the pointer unique? " << ptr.Unique() << std::endl;
@@ -52,7 +52,7 @@ void UIFunctions(SharedPtr<T>& ptr) {
         case 7:
             break;
         default:
-            std::cout << "Wrong function\n";
+            std::cout << "Wrong function.\n";
             break;
     }
 }
@@ -67,11 +67,11 @@ void UINextStep() {
 
     UIAddPtr<T>(vec, object);
 
-    bool flag = true;
-    while (flag) {
+    bool exitFlag = true;
+    while (exitFlag) {
         std::cout << "Do you want to continue?\n1. Yes\n0. No\n";
-        std::cin >> flag;
-        if (!flag) {
+        std::cin >> exitFlag;
+        if (!exitFlag) {
             break;
         }
         std::cout << "What do you want to do?\n1. Create a new pointer to the object\n2. Call the function\n3. Delete the ptr\n4. Exit\n";
@@ -88,7 +88,12 @@ void UINextStep() {
                 std::cout << "Enter the number of the pointer:\n";
                 size_t num;
                 std::cin >> num;
-                UIFunctions(vec[num - 1]); // ПЕРВЫЙ НЕ НОЛЬ
+                if (num > vec.size() || num == 0) {
+                    std::cout << "Wrong index.\n";
+                    exitFlag = false;
+                    break;
+                }
+                UIFunctions(vec[num - 1]); // первый не ноль!
                 break;
             }
             case 3:
@@ -96,14 +101,20 @@ void UINextStep() {
                 std::cout << "Enter the number of the pointer:\n";
                 size_t num;
                 std::cin >> num;
+                if (num > vec.size() || num == 0) {
+                    std::cout << "Wrong index.\n";
+                    exitFlag = false;
+                    break;
+                }
                 vec.erase(vec.begin() + num - 1);
                 break;
             }
             case 4:
-                flag = false;
+                exitFlag = false;
                 break;
             default:
-                std::cout << "Wrong answer\n";
+                std::cout << "Wrong answer.\n";
+                exitFlag = false;
                 break;
         }
     }

@@ -1,25 +1,24 @@
 #include <cassert>
-#include <string>
 
 template<typename T>
 struct ControlBlock { // Вспомогательный класс для объекта.
-    T* object_ = nullptr;
-    size_t SharedCount = 0; // Счётчик ++ при каждом вызове либо оператора копирования, либо оператора присваивания.
-    size_t WeakCount = 0;
+    T* Object_ = nullptr;
+    size_t SharedCount_ = 0; // Счётчик ++ при каждом вызове либо оператора копирования, либо оператора присваивания.
+    size_t WeakCount_ = 0;
 
-    ControlBlock<T>(T* object, size_t sharedCount, size_t weakCount)
-            : object_(object), SharedCount(sharedCount), WeakCount(weakCount) {}
+    ControlBlock<T>(T* Object, size_t SharedCount, size_t WeakCount)
+            : Object_(Object), SharedCount_(SharedCount), WeakCount_(WeakCount) {}
 
     ControlBlock& operator=(const ControlBlock& other) {
-        assert(other.object_ != nullptr && this->object_ != nullptr);
-        this->object_ = other.object_;
-        this->SharedCount = other.SharedCount;
-        this->WeakCount = other.WeakCount;
+        assert(other.Object_ != nullptr && Object_ != nullptr);
+        Object_ = other.Object_;
+        SharedCount_ = other.SharedCount_;
+        WeakCount_ = other.WeakCount_;
     }
 
     bool operator==(const ControlBlock& other) {
-        assert(other.object_ != nullptr || this->object_ == nullptr);
-        if (object_ == other.object_) {
+        assert(other.Object_ != nullptr || Object_ == nullptr);
+        if (Object_ == other.Object_) {
             return true;
         }
         return false;
@@ -36,111 +35,110 @@ class WeakPtr;
 template<typename T>
 class SharedPtr {
 private:
-    ControlBlock<T>* state_;
+    ControlBlock<T>* State_;
 
     friend class WeakPtr<T>;
 
-    explicit SharedPtr<T>(ControlBlock<T>* state) : state_(state) { // для WeakPtr
-        assert(state_ != nullptr);
-        state_->SharedCount++;
+    explicit SharedPtr<T>(ControlBlock<T>* State) : State_(State) { // для WeakPtr
+        assert(State_ != nullptr);
+        State_->SharedCount_++;
     }
 
 public:
-    explicit SharedPtr<T>(T* object) {
-        if (object != nullptr) {
-            state_ = new ControlBlock<T>(object, 1, 0);
+    explicit SharedPtr<T>(T* Object) {
+        if (Object != nullptr) {
+            State_ = new ControlBlock<T>(Object, 1, 0);
         } else {
-            state_ = nullptr;
+            State_ = nullptr;
         }
     }
 
-    SharedPtr<T>(const SharedPtr<T>& other) : state_(other.state_) {
-        if (state_ != nullptr) {
-            state_->SharedCount++;
+    SharedPtr<T>(const SharedPtr<T>& other) : State_(other.State_) {
+        if (State_ != nullptr) {
+            State_->SharedCount_++;
         }
     }
 
-    SharedPtr<T>(SharedPtr<T>&& other) : state_(other.state_) {
-
-        other.state_ = nullptr;
+    SharedPtr<T>(SharedPtr<T>&& other) : State_(other.State_) {
+        other.State_ = nullptr;
     }
 
     T& operator*() const {
-        assert(state_->object_ != nullptr);
-        return *(state_->object_);
+        assert(State_ != nullptr && State_->Object_ != nullptr);
+        return *(State_->Object_);
     }
 
     /*
      * THE SAME:
      * obj->len() == (*obj).len() == obj.operator->()->len() == *(obj.operator->()).len()
-     * obj-> == obj.state_->object->
+     * obj-> == obj.State_->object->
      */
     T* operator->() const {
-        assert(state_->object_ != nullptr);
-        return state_->object_;
+        assert(State_ != nullptr && State_->Object_ != nullptr);
+        return State_->Object_;
     }
 
     SharedPtr& operator=(const SharedPtr<T>& other) {
-        if ((--this->state_->SharedCount + this->state_->WeakCount == 0) && (state_ != other.state_)) {
-            delete state_;
+        assert(State_ != nullptr);
+        State_->SharedCount_--;
+        if ((State_->SharedCount_ + State_->WeakCount_ == 0) && (State_ != other.State_)) {
+            delete State_;
         }
-        state_ = other.state_;
-        state_->SharedCount++;
+        State_ = other.State_;
+        State_->SharedCount_++;
         return *this;
     }
 
-    size_t Use_count() const {
-        assert(state_->object_ != nullptr);
-        return state_->SharedCount;
+    size_t UseCount() const {
+        assert(State_ != nullptr && State_->Object_ != nullptr);
+        return State_->SharedCount_;
     }
 
     bool Unique() const {
-        assert(state_->object_ != nullptr);
-        return state_->SharedCount == 1;
+        assert(State_ != nullptr && State_->Object_ != nullptr);
+        return State_->SharedCount_ == 1;
     }
 
     explicit operator bool() const {
-        return state_->object_ != nullptr;
+        assert(State_ != nullptr);
+        return State_->Object_ != nullptr;
     }
 
     T* Get() {
-        assert(state_->object_ != nullptr);
-        return state_->object_;
+        assert(State_ != nullptr && State_->Object_ != nullptr);
+        return State_->Object_;
     }
 
     void Reset(T* newObject) {
-        if (state_ != nullptr) {
-            state_->SharedCount--;
-            if (state_->SharedCount == 0) {
-                delete state_->object_;
-                state_->object_ = nullptr;
-            }
-            if (state_->SharedCount + state_->WeakCount == 0) {
-                delete state_;
-                state_ = nullptr;
+        if (State_ != nullptr) {
+            State_->SharedCount_--;
+            if (State_->SharedCount_ + State_->WeakCount_ == 0) {
+                delete State_->Object_;
+                State_->Object_ = nullptr;
+                delete State_;
+                State_ = nullptr;
             }
         }
         if (newObject != nullptr) {
-            state_ = new ControlBlock<T>(newObject, 1, 0);
+            State_ = new ControlBlock<T>(newObject, 1, 0);
         } else {
-            state_ = nullptr;
+            State_ = nullptr;
         }
     }
 
     void Swap(SharedPtr<T>& other) {
-        std::swap(*state_->object_, *other.state_->object_);
+        assert(State_ != nullptr && State_->Object_ != nullptr);
+        std::swap(*State_->Object_, *other.State_->Object_);
     }
 
     ~SharedPtr<T>() {
-        if (state_ != nullptr) {
-            state_->SharedCount--;
-            if (state_->SharedCount == 0) {
-                delete state_->object_;
-                state_->object_ = nullptr;
-            }
-            if (state_->SharedCount + state_->WeakCount == 0) {
-                delete state_;
-                state_ = nullptr;
+        if (State_ != nullptr) {
+            State_->SharedCount_--;
+            if (State_->SharedCount_ + State_->WeakCount_ == 0) {
+                delete State_->Object_;
+                State_->Object_ = nullptr;
+                delete State_;
+                State_ = nullptr;
             }
         }
     }
@@ -149,60 +147,74 @@ public:
 template<typename T>
 class WeakPtr {
 private:
-    ControlBlock<T>* state_;
+    ControlBlock<T>* State_;
 
 public:
-    explicit WeakPtr<T>(ControlBlock<T>* state): state_(state) {
-        if (state != nullptr) {
-            state_->WeakCount++;
+    explicit WeakPtr<T>(ControlBlock<T>* State): State_(State) {
+        if (State != nullptr) {
+            State_->WeakCount_++;
         }
     }
 
-    WeakPtr<T>(const WeakPtr<T>& other) : state_(other->state_) {
-        if (other->state_ != nullptr) {
-            state_->WeakCount++;
+    WeakPtr<T>(const WeakPtr<T>& other) : State_(other->State_) {
+        if (other->State_ != nullptr) {
+            State_->WeakCount_++;
         }
     }
 
     SharedPtr<T> Lock() {
-        if (state_ == nullptr) {
+        if (State_ == nullptr) {
             return SharedPtr<T>(nullptr);
         }
-        if (state_->object_ == nullptr) {
+        if (State_->Object_ == nullptr) {
             return SharedPtr<T>(nullptr);
         }
-        return SharedPtr<T>(state_);
+        return SharedPtr<T>(State_);
     }
 
     WeakPtr& operator=(const WeakPtr<T>& other) {
-        if (state_ != nullptr) {
-            state_->WeakCount--;
-            if (state_->SharedCount + state_->WeakCount == 0) {
-                delete state_;
-                state_ = nullptr;
+        if (State_ != nullptr) {
+            State_->WeakCount_--;
+            if (State_->SharedCount_ + State_->WeakCount_ == 0) {
+                delete State_->Object_;
+                State_->Object_ = nullptr;
+                delete State_;
+                State_ = nullptr;
             }
         }
-        state_ = other.state_;
-        if (state_ != nullptr) {
-            state_->WeakCount++;
+        State_ = other.State_;
+        if (State_ != nullptr) {
+            State_->WeakCount_++;
         }
         return *this;
     }
 
-    size_t Use_count() const {
-        if (state_ == nullptr) {
+    size_t UseCount() const {
+        if (State_ == nullptr) {
             return 0;
         }
-        return state_->SharedCount;
+        return State_->SharedCount_;
     }
 
     bool Expired() const {
-        if (state_ == nullptr) {
+        if (State_ == nullptr) {
             return true;
         }
-        if (state_->object_ == nullptr) {
+        if (State_->Object_ == nullptr) {
             return true;
         }
         return false;
+    }
+
+    ~WeakPtr() {
+        if (State_ != nullptr) {
+            State_->WeakCount_--;
+            if (State_->SharedCount_ + State_->WeakCount_ == 0) {
+                delete State_->Object_;
+                State_->Object_ = nullptr;
+                delete State_;
+                State_ = nullptr;
+            }
+        }
     }
 };
