@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <string>
 
@@ -70,19 +72,19 @@ void TestSharedPtrFunction() {
     std::cout << std::endl;
 
     // Unique()
-    assert(ptr1.Unique() == 0);
+    assert(ptr1.Unique() == false);
     std::cout << "Is ptr1 unique: " << ptr1.Unique() << std::endl;
 
-    assert(ptr2.Unique() == 1);
+    assert(ptr2.Unique() == true);
     std::cout << "Is ptr2 unique: " << ptr2.Unique() << std::endl;
 
-    assert(ptr3.Unique() == 0);
+    assert(ptr3.Unique() == false);
     std::cout << "Is ptr3 unique: " << ptr3.Unique() << std::endl;
 
-    assert(ptr4.Unique() == 0);
+    assert(ptr4.Unique() == false);
     std::cout << "Is ptr4 unique: " << ptr4.Unique() << std::endl;
 
-    assert(ptr5.Unique() == 0);
+    assert(ptr5.Unique() == false);
     std::cout << "Is ptr5 unique: " << ptr5.Unique() << std::endl;
     std::cout << std::endl;
 

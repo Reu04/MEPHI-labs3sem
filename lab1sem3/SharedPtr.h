@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cassert>
 
 template<typename T>
@@ -14,14 +16,12 @@ struct ControlBlock { // Вспомогательный класс для объ
         Object_ = other.Object_;
         SharedCount_ = other.SharedCount_;
         WeakCount_ = other.WeakCount_;
+        return *this;
     }
 
     bool operator==(const ControlBlock& other) {
         assert(other.Object_ != nullptr || Object_ == nullptr);
-        if (Object_ == other.Object_) {
-            return true;
-        }
-        return false;
+        return Object_ == other.Object_;
     }
 
     bool operator!=(const ControlBlock& other) {
@@ -197,13 +197,7 @@ public:
     }
 
     bool Expired() const {
-        if (State_ == nullptr) {
-            return true;
-        }
-        if (State_->Object_ == nullptr) {
-            return true;
-        }
-        return false;
+        return State_ == nullptr || State_->Object_ == nullptr;
     }
 
     ~WeakPtr() {

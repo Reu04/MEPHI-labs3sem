@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include "SharedPtr.h"
@@ -67,11 +69,11 @@ void UINextStep() {
 
     UIAddPtr<T>(vec, object);
 
-    bool exitFlag = true;
-    while (exitFlag) {
+    bool shouldContinue = true;
+    while (shouldContinue) {
         std::cout << "Do you want to continue?\n1. Yes\n0. No\n";
-        std::cin >> exitFlag;
-        if (!exitFlag) {
+        std::cin >> shouldContinue;
+        if (!shouldContinue) {
             break;
         }
         std::cout << "What do you want to do?\n1. Create a new pointer to the object\n2. Call the function\n3. Delete the ptr\n4. Exit\n";
@@ -90,7 +92,7 @@ void UINextStep() {
                 std::cin >> num;
                 if (num > vec.size() || num == 0) {
                     std::cout << "Wrong index.\n";
-                    exitFlag = false;
+                    shouldContinue = false;
                     break;
                 }
                 UIFunctions(vec[num - 1]); // первый не ноль!
@@ -103,18 +105,18 @@ void UINextStep() {
                 std::cin >> num;
                 if (num > vec.size() || num == 0) {
                     std::cout << "Wrong index.\n";
-                    exitFlag = false;
+                    shouldContinue = false;
                     break;
                 }
                 vec.erase(vec.begin() + num - 1);
                 break;
             }
             case 4:
-                exitFlag = false;
+                shouldContinue = false;
                 break;
             default:
                 std::cout << "Wrong answer.\n";
-                exitFlag = false;
+                shouldContinue = false;
                 break;
         }
     }
